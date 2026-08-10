@@ -2,15 +2,22 @@
 	"name": "vscode-klipper",
 	"version": "0.0.0",
 	"license": "MIT",
-	"scripts": {},
+	"scripts": {
+		"build": "nx build klipper",
+		"test": "tsc -p packages/klipper/tsconfig.spec.json && node --test \"dist/spec/**/*.spec.js\"",
+		"verify-parity": "python3 tools/verify-parity.py test-configs",
+		"icons": "python3 tools/make-icons.py",
+		"format": "prettier --write \"packages/**/*.{ts,json}\""
+	},
 	"private": true,
 	"dependencies": {},
 	"devDependencies": {
 		"@nrwl/js": "15.4.5",
 		"@nrwl/workspace": "15.4.5",
+		"@types/node": "^20.11.0",
+		"@types/vscode": "^1.61.0",
 		"@vscode-devkit/grammar": "^0.0.1",
 		"@vscode-devkit/nx": "^0.0.5",
-		"@types/vscode": "^1.61.0",
 		"nx": "15.4.5",
 		"prettier": "^2.6.2",
 		"typescript": "~4.8.2"

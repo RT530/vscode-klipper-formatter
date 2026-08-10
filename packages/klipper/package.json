@@ -1,37 +1,47 @@
 {
-	"name": "klipper",
-	"displayName": "Klipper",
-	"description": "Rich language support for Klipper configuration files and Klipper-flavored GCode",
-	"version": "0.2.2",
+	"name": "klipper-formatter",
+	"displayName": "Klipper Config + Formatter",
+	"description": "Rich language support for Klipper configuration files and Klipper-flavored GCode, plus a whitespace-safe formatter and Jinja block diagnostics.",
+	"version": "0.3.0",
 	"main": "main.js",
-	"author": "Danny McGee <dannymcgee@gmail.com>",
-	"publisher": "dannymcgee",
+	"author": "Ricky Tsai <ricky@rtnztech.com>",
+	"publisher": "rtnztech",
 	"license": "MIT",
 	"icon": "assets/icon.png",
 	"engines": {
 		"vscode": "^1.61.0"
 	},
 	"repository": {
-		"types": "git",
-		"url": "https://github.com/dannymcgee/vscode-klipper"
+		"type": "git",
+		"url": "https://github.com/RT530/vscode-klipper-formatter"
 	},
 	"contributes": {
 		"languages": [
 			{
 				"id": "klipper-cfg",
-				"aliases": ["Klipper Config"],
-				"extensions": [".cfg"],
+				"aliases": [
+					"Klipper Config"
+				],
+				"extensions": [
+					".cfg"
+				],
 				"configuration": "./klipper-cfg.config.json"
 			},
 			{
 				"id": "klipper-gcode",
-				"aliases": ["Klipper-Flavored GCode"],
-				"extensions": [".gcode"],
+				"aliases": [
+					"Klipper-Flavored GCode"
+				],
+				"extensions": [
+					".gcode"
+				],
 				"configuration": "./klipper-gcode.config.json"
 			},
 			{
 				"id": "klipper-script",
-				"aliases": ["Klipper Jinja2 Template"]
+				"aliases": [
+					"Klipper Jinja2 Template"
+				]
 			}
 		],
 		"grammars": [
@@ -50,9 +60,110 @@
 				"scopeName": "source.klipper-script",
 				"path": "./klipper-script.tmLanguage.json"
 			}
-		]
+		],
+		"commands": [
+			{
+				"command": "klipperFormatter.formatWorkspace",
+				"title": "Klipper: Format All .cfg Files in Workspace",
+				"category": "Klipper"
+			},
+			{
+				"command": "klipperFormatter.previewWorkspace",
+				"title": "Klipper: Preview Formatting of All .cfg Files (dry run)",
+				"category": "Klipper"
+			},
+			{
+				"command": "klipperFormatter.checkBlocks",
+				"title": "Klipper: Check Jinja Block Balance in Workspace",
+				"category": "Klipper"
+			}
+		],
+		"configuration": {
+			"title": "Klipper Formatter",
+			"properties": {
+				"klipperFormatter.indentSize": {
+					"type": "integer",
+					"default": 4,
+					"minimum": 1,
+					"maximum": 8,
+					"markdownDescription": "Spaces per indent level inside a multi-line value (a `gcode:` block and friends). This is also the amount each nested Jinja block adds, unless `#klipperFormatter.jinjaIndentSize#` overrides it."
+				},
+				"klipperFormatter.jinjaIndentSize": {
+					"type": "integer",
+					"default": 0,
+					"minimum": 0,
+					"maximum": 8,
+					"markdownDescription": "Extra spaces added per nested Jinja block (`{% if %}`, `{% for %}`, ...). Leave at `0` to use `#klipperFormatter.indentSize#` so the whole tree gets one uniform style. Set to `2` to keep the tighter nesting style some configs use."
+				},
+				"klipperFormatter.indentJinjaBlocks": {
+					"type": "boolean",
+					"default": true,
+					"markdownDescription": "Indent the body of each `{% if %}` / `{% for %}` block. Turn off to give every line in a value block a single flat indent level."
+				},
+				"klipperFormatter.normalizeSeparatorSpacing": {
+					"type": "boolean",
+					"default": true,
+					"markdownDescription": "Rewrite `key   : value` as `key: value`. The original separator is kept, so `key = value` files (such as the `variables.cfg` written by `save_variables`) stay on `=`."
+				},
+				"klipperFormatter.maxConsecutiveBlankLines": {
+					"type": "integer",
+					"default": 1,
+					"minimum": 0,
+					"maximum": 10,
+					"description": "Collapse longer runs of blank lines down to this many."
+				},
+				"klipperFormatter.blankLinesBeforeSection": {
+					"type": "integer",
+					"default": 1,
+					"minimum": 0,
+					"maximum": 5,
+					"markdownDescription": "Blank lines to guarantee before a `[section]` header. A comment directly above a header is treated as part of it, and bare adjacent headers stay grouped."
+				},
+				"klipperFormatter.trimLeadingBlankLines": {
+					"type": "boolean",
+					"default": true,
+					"description": "Remove blank lines at the very top of the file."
+				},
+				"klipperFormatter.diagnostics.enabled": {
+					"type": "boolean",
+					"default": true,
+					"markdownDescription": "Report unbalanced Jinja blocks (a `{% if %}` with no `{% endif %}`, a stray `{% endfor %}`, an unterminated `{% ... %}` tag) as problems."
+				},
+				"klipperFormatter.exclude": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"default": [],
+					"markdownDescription": "Glob patterns excluded from the workspace-wide commands, diagnostics and format-on-save. Example: `[\"**/mmu/**\", \"**/timelapse.cfg\"]` to leave vendor-managed configs alone."
+				}
+			}
+		},
+		"configurationDefaults": {
+			"[klipper-cfg]": {
+				"editor.insertSpaces": true,
+				"editor.tabSize": 4,
+				"editor.defaultFormatter": "rtnztech.klipper-formatter",
+				"files.trimTrailingWhitespace": true,
+				"files.insertFinalNewline": true,
+				"files.trimFinalNewlines": true
+			}
+		}
 	},
 	"activationEvents": [
 		"onLanguage:klipper-cfg"
+	],
+	"categories": [
+		"Formatters",
+		"Programming Languages",
+		"Linters"
+	],
+	"keywords": [
+		"klipper",
+		"printer.cfg",
+		"3d printing",
+		"moonraker",
+		"jinja",
+		"gcode"
 	]
 }

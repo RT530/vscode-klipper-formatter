@@ -37,3 +37,6 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
+
+# real printer config, populated by rsync (see README)
+test-configs/

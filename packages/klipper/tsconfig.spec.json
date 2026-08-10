@@ -1,0 +1,15 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"outDir": "../../dist/spec",
+		"rootDir": "src/app",
+		"types": ["node"],
+		"target": "es2021",
+		"module": "CommonJS",
+		"moduleResolution": "node",
+		"lib": ["es2021", "DOM"],
+		"strict": true,
+		"esModuleInterop": true
+	},
+	"include": ["src/app/formatter.ts", "src/app/scanner.ts", "src/app/glob.ts", "src/app/*.spec.ts"]
+}

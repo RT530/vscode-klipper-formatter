@@ -159,6 +159,63 @@ def v_format(d, p, S):
 
 
 # --------------------------------------------------------------------------
+# 11 -- brace mark laid straight over the base, nested in the V's opening
+# --------------------------------------------------------------------------
+def brace_mark(size):
+    """The brace mark alone, on transparent ground, rendered at `size` px.
+
+    Drawn rather than rescaled from a bitmap so it stays crisp: the whole icon
+    keeps a handful of flat colours instead of the thousands a JPEG round-trip
+    introduces. Geometry is tuned so the mark nests inside the V's opening --
+    the free gap there narrows from 193px at y=34 to 61px at y=100, so a mark
+    much wider than this would collide with the arms.
+    """
+    S = size * SS
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    q = lambda v: int(round(v * size * SS / 256.0))
+
+    for notch, stem, tip in [(26, 50, 74), (230, 206, 182)]:
+        y0, y1 = 40, 216
+        ym = (y0 + y1) / 2
+        half = ym - y0
+        t, knee = half * 0.45, half * 0.18
+        upper = cubic((tip, y0), (stem, y0), (stem, y0), (stem, y0 + t)) + cubic(
+            (stem, y0 + t), (stem, ym - knee), (stem, ym), (notch, ym)
+        )
+        lower = cubic((notch, ym), (stem, ym), (stem, ym + knee), (stem, y1 - t)) + cubic(
+            (stem, y1 - t), (stem, y1), (stem, y1), (tip, y1)
+        )
+        for path in (upper, lower):
+            pts = [(q(x), q(y)) for x, y in path]
+            d.line(pts, fill=ORANGE, width=q(20), joint="curve")
+            r = q(20) / 2
+            for x, y in (pts[0], pts[-1]):
+                d.ellipse([x - r, y - r, x + r, y + r], fill=ORANGE)
+
+    # uniform bar height, staggered indent -- the reference had 4-5px bars of
+    # four different widths, which turned to mush below about 64px
+    for x0, x1, y in [(92, 176, 74), (104, 176, 110), (104, 164, 146), (92, 158, 182)]:
+        h = 22
+        r = h / 2
+        d.rounded_rectangle([q(x0), q(y - r), q(x1), q(y + r)], radius=q(r), fill=BAR)
+
+    return img.resize((size, size), Image.LANCZOS)
+
+
+def overlay_onto(base, size=104, y=8):
+    """Lays the mark over the base, clear of the V.
+
+    y=8 is the tuned position: at this size the mark starts clipping the arms at
+    y=10, so this sits two pixels inside that with the mark still as large as
+    the opening allows.
+    """
+    out = base.copy().convert("RGBA")
+    out.alpha_composite(brace_mark(size), ((out.size[0] - size) // 2, y))
+    return out
+
+
+# --------------------------------------------------------------------------
 # Badged variants: the dannymcgee.klipper icon with a mark in the corner
 # --------------------------------------------------------------------------
 def rounded_mask(side, frac=5):
@@ -232,6 +289,8 @@ def main():
                 "icon-10-badge-edited-clear.png",
                 badge_onto(base, edited, pos="tc", plate=None),
             ))
+
+        variants.append(("icon-11-overlay.png", overlay_onto(base)))
 
     for name, img in variants:
         img.save(os.path.join(IMAGES, name), 'PNG')

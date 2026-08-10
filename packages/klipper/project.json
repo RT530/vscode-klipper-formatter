@@ -16,6 +16,7 @@
 					"LICENSE",
 					"package.json",
 					"README.md",
+					"CHANGELOG.md",
 					{
 						"input": "src/assets/",
 						"output": "assets/",

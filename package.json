@@ -7,7 +7,9 @@
 		"test": "tsc -p packages/klipper/tsconfig.spec.json && node --test \"dist/spec/**/*.spec.js\"",
 		"verify-parity": "python3 tools/verify-parity.py test-configs",
 		"icons": "python3 tools/make-icons.py",
-		"format": "prettier --write \"packages/**/*.{ts,json}\""
+		"format": "prettier --write \"packages/**/*.{ts,json}\"",
+		"publish": "npm run build && cd dist/packages/vscode-klipper && npx --yes @vscode/vsce publish --no-dependencies",
+		"publish:ovsx": "npm run build && cd dist/packages/vscode-klipper && npx --yes ovsx publish --no-dependencies"
 	},
 	"private": true,
 	"dependencies": {},

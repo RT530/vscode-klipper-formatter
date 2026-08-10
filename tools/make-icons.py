@@ -161,29 +161,45 @@ def v_format(d, p, S):
 # --------------------------------------------------------------------------
 # Badged variants: the dannymcgee.klipper icon with a mark in the corner
 # --------------------------------------------------------------------------
-def badge_onto(base, mark, frac=0.44, margin=6, ring=5, pos='br'):
-    out = base.copy().convert('RGBA')
-    W = out.size[0]
-    b = int(W * frac)
-    m = mark.resize((b, b), Image.LANCZOS)
+def rounded_mask(side, frac=5):
+	mk = Image.new("L", (side * 4, side * 4), 0)
+	ImageDraw.Draw(mk).rounded_rectangle(
+		[0, 0, side * 4 - 1, side * 4 - 1], radius=side * 4 // frac, fill=255
+	)
+	return mk.resize((side, side), Image.LANCZOS)
 
-    def rounded_mask(side):
-        mk = Image.new('L', (side * 4, side * 4), 0)
-        ImageDraw.Draw(mk).rounded_rectangle(
-            [0, 0, side * 4 - 1, side * 4 - 1], radius=side * 4 // 5, fill=255)
-        return mk.resize((side, side), Image.LANCZOS)
 
-    m.putalpha(rounded_mask(b))
-    if pos == 'tc':          # centred along the top edge
-        x, y = (W - b) // 2, margin
-    else:                    # bottom-right corner
-        x = y = W - b - margin
-    ring_side = b + ring * 2
-    ring_img = Image.new('RGBA', (ring_side, ring_side), (0, 0, 0, 0))
-    ring_img.paste((18, 19, 21, 255), (0, 0), rounded_mask(ring_side))
-    out.alpha_composite(ring_img, (x - ring, y - ring))
-    out.alpha_composite(m, (x, y))
-    return out
+def badge_onto(base, mark, frac=0.44, margin=6, ring=5, pos="br", plate=(18, 19, 21, 255)):
+	"""Composites `mark` onto `base` as a corner or top-centre badge.
+
+	`plate` is the colour painted behind the mark. A mark with a transparent
+	background needs one, or the base shows through and the badge stops reading
+	as a separate thing; pass None to overlay the mark directly.
+	"""
+	out = base.copy().convert("RGBA")
+	W = out.size[0]
+	b = int(W * frac)
+	m = mark.resize((b, b), Image.LANCZOS)
+
+	x = (W - b) // 2 if pos == "tc" else W - b - margin
+	y = margin if pos == "tc" else W - b - margin
+
+	if plate is not None:
+		filled = Image.new("RGBA", (b, b), (0, 0, 0, 0))
+		filled.paste(Image.new("RGBA", (b, b), plate), (0, 0), rounded_mask(b))
+		filled.alpha_composite(m)
+		m = filled
+
+		# ring in the base's own ground colour, to separate badge from artwork
+		rs = b + ring * 2
+		r = Image.new("RGBA", (rs, rs), (0, 0, 0, 0))
+		r.paste(Image.new("RGBA", (rs, rs), (18, 19, 21, 255)), (0, 0), rounded_mask(rs))
+		out.alpha_composite(r, (x - ring, y - ring))
+	else:
+		m.putalpha(rounded_mask(b))
+
+	out.alpha_composite(m, (x, y))
+	return out
 
 
 def main():
@@ -197,10 +213,25 @@ def main():
     ]
     if os.path.exists(base_path):
         base = Image.open(base_path).convert('RGBA')
-        variants.append(('icon-06-badge-v-bars.png', badge_onto(base, canvas(256, v_bars))))
-        variants.append(('icon-07-badge-braces.png', badge_onto(base, canvas(256, braces))))
-        variants.append(('icon-08-badge-braces-top.png',
-                         badge_onto(base, canvas(256, braces), pos='tc')))
+        variants.append(("icon-06-badge-v-bars.png", badge_onto(base, canvas(256, v_bars))))
+        variants.append(("icon-07-badge-braces.png", badge_onto(base, canvas(256, braces))))
+        variants.append(
+            ("icon-08-badge-braces-top.png", badge_onto(base, canvas(256, braces), pos="tc"))
+        )
+
+        # Hand-edited brace mark: transparent background, so it gets a white
+        # plate -- its pale bars do not read against the dark base without one.
+        edited_path = os.path.join(IMAGES, "icon-01-braces-edited.png")
+        if os.path.exists(edited_path):
+            edited = Image.open(edited_path).convert("RGBA")
+            variants.append((
+                "icon-09-badge-edited-white.png",
+                badge_onto(base, edited, pos="tc", plate=(255, 255, 255, 255)),
+            ))
+            variants.append((
+                "icon-10-badge-edited-clear.png",
+                badge_onto(base, edited, pos="tc", plate=None),
+            ))
 
     for name, img in variants:
         img.save(os.path.join(IMAGES, name), 'PNG')

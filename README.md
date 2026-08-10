@@ -107,6 +107,14 @@ rsync -a --include='*/' --include='*.cfg' --exclude='*' \
   <printer>:/home/klipper/printer_data/config/ test-configs/
 ```
 
+## Icon
+
+The icon is the upstream `dannymcgee.klipper` icon with a brace mark laid over
+the V's opening -- Klipper's single-brace `{expr}` syntax wrapped around
+indented config lines. `tools/make-icons.py` renders every variant to its own
+file under `tools/icon-assets/`; `--use <name>` promotes one to the shipped
+`packages/klipper/src/assets/icon.png`.
+
 ## Licence
 
 MIT. Copyright 2023 Danny McGee for the original work; see `LICENSE`.
